@@ -15,9 +15,10 @@ import org.bukkit.persistence.PersistentDataType;
 public class HeroManager {
 
     private final Blockx plugin;
-    private final CustomItemManager customItemManager; // Keep for future use if needed
+    private final CustomItemManager customItemManager;
 
-    public static final NamespacedKey CUSTOM_HERO_TAG_KEY = new NamespacedKey("blockx", "custom_hero_type");
+    public static final NamespacedKey HERO_SIDE_KEY = new NamespacedKey("blockx", "hero_side");
+    public static final NamespacedKey HERO_TYPE_KEY = new NamespacedKey("blockx", "hero_type");
 
 
     public HeroManager(Blockx plugin, CustomItemManager customItemManager) {
@@ -25,46 +26,80 @@ public class HeroManager {
         this.customItemManager = customItemManager;
     }
 
-    public void spawnHero(Player player, String heroType, ItemStack weapon) {
+    // Updated spawnHero method to include HeroSide
+    public void spawnHero(Player player, String heroTypeStr, HeroSide side, ItemStack weapon) {
         Location spawnLocation = player.getLocation();
 
-        // For now, we only support "zombie" as a base type.
-        // We can expand this later with a factory or strategy pattern for different hero types.
-        if (!"zombie".equalsIgnoreCase(heroType)) {
-            player.sendMessage(ChatColor.RED + "Unsupported hero type for spawning: " + heroType);
-            return;
+        // heroTypeStr will now always be "zombie" from the command handlers.
+        // We no longer need to differentiate between "zombie" and "villager" here for EntityType.
+        EntityType entityTypeToSpawn = EntityType.ZOMBIE;
+        String baseHeroName = "Zombie"; // The base name for the hero type
+
+        // Validate heroTypeStr from command - should always be "zombie" but good to be safe.
+        if (!"zombie".equalsIgnoreCase(heroTypeStr)) {
+            plugin.getLogger().warning("HeroManager received an unexpected heroTypeStr: '" + heroTypeStr + "'. Defaulting to Zombie.");
+            // heroTypeStr = "zombie"; // Ensure it is set for PDC if it was something else
         }
 
-        Zombie hero = (Zombie) spawnLocation.getWorld().spawnEntity(spawnLocation, EntityType.ZOMBIE);
+        org.bukkit.entity.LivingEntity hero = (org.bukkit.entity.LivingEntity) spawnLocation.getWorld().spawnEntity(spawnLocation, entityTypeToSpawn);
 
-        // Set a custom name (optional, but good for identification)
-        String heroName = "Hero " + heroType.substring(0, 1).toUpperCase() + heroType.substring(1); // e.g., "Hero Zombie"
+        // Set a custom name based on side and the base hero name ("Zombie")
+        String heroName = side.name() + " " + baseHeroName;
         if (weapon != null && weapon.hasItemMeta()) {
             ItemMeta weaponMeta = weapon.getItemMeta();
             if (weaponMeta != null && weaponMeta.hasDisplayName()) {
-                // Try to make a more specific name, e.g., "Barbarian Axe Wielding Zombie"
-                // We need to strip color codes from the display name for a cleaner custom name.
                 String cleanWeaponName = ChatColor.stripColor(weaponMeta.getDisplayName());
-                heroName = cleanWeaponName + " " + heroType.substring(0, 1).toUpperCase() + heroType.substring(1);
+                // Example: "RED Sword Zombie", "BLUE Axe Zombie"
+                heroName = side.name() + " " + cleanWeaponName + " " + baseHeroName;
             }
         }
-        hero.setCustomName(ChatColor.GOLD + heroName); // Example styling
+        hero.setCustomName(side.getDisplayColor() + heroName);
         hero.setCustomNameVisible(true);
 
-        // Allow the hero to pick up items
         hero.setCanPickupItems(true);
 
-        // Equip weapon if provided
-        if (weapon != null) {
+        if (weapon != null && hero.getEquipment() != null) {
             hero.getEquipment().setItemInMainHand(weapon);
-            hero.getEquipment().setItemInMainHandDropChance(0.0f); // Don't drop the main weapon
+            hero.getEquipment().setItemInMainHandDropChance(0.0f);
         }
 
-        // Tag the hero for identification by other systems (e.g., HeroPickupListener)
-        // The value could be more specific, like "zombie:barbarian_axe_wielder" if needed
-        hero.getPersistentDataContainer().set(CUSTOM_HERO_TAG_KEY, PersistentDataType.STRING, heroType);
+        // Store hero side and the effective type ("zombie") in persistent data
+        hero.getPersistentDataContainer().set(HERO_SIDE_KEY, PersistentDataType.STRING, side.name());
+        hero.getPersistentDataContainer().set(HERO_TYPE_KEY, PersistentDataType.STRING, "zombie"); // Always "zombie" now
 
-        player.sendMessage(ChatColor.GREEN + "A " + heroName + " has been summoned!");
-        plugin.getLogger().info("Spawned hero: " + heroName + " for player " + player.getName() + " with weapon: " + (weapon != null ? weapon.getType() : "none"));
+        player.sendMessage(side.getDisplayColor() + "A " + heroName + " has been summoned to the " + side.name() + " side!");
+        plugin.getLogger().info("Spawned " + side.name() + " hero: " + heroName + " (EntityType: "+ entityTypeToSpawn.name() + ") for player " + player.getName() + " with weapon: " + (weapon != null ? weapon.getType() : "none"));
+
+        // Force target nearby opposing hero
+        if (hero instanceof org.bukkit.entity.Mob) {
+            org.bukkit.entity.Mob mob = (org.bukkit.entity.Mob) hero;
+            final double TARGET_RADIUS = 15.0; // Radius to scan for enemies
+            java.util.List<org.bukkit.entity.Entity> nearbyEntities = mob.getNearbyEntities(TARGET_RADIUS, TARGET_RADIUS, TARGET_RADIUS);
+
+            for (org.bukkit.entity.Entity nearbyEntity : nearbyEntities) {
+                if (nearbyEntity instanceof org.bukkit.entity.LivingEntity && nearbyEntity.getUniqueId() != mob.getUniqueId()) {
+                    org.bukkit.entity.LivingEntity potentialTarget = (org.bukkit.entity.LivingEntity) nearbyEntity;
+                    org.bukkit.persistence.PersistentDataContainer targetPDC = potentialTarget.getPersistentDataContainer();
+
+                    if (targetPDC.has(HERO_SIDE_KEY, PersistentDataType.STRING)) {
+                        String targetSideStr = targetPDC.get(HERO_SIDE_KEY, PersistentDataType.STRING);
+                        HeroSide targetSide = null;
+                        try {
+                            targetSide = HeroSide.valueOf(targetSideStr.toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            // Invalid side on potential target, skip
+                            continue;
+                        }
+
+                        if (targetSide != side) { // Opposing sides
+                            mob.setTarget(potentialTarget);
+                            plugin.getLogger().info("HeroManager: Forcing newly spawned " + side.name() + " hero " + heroName +
+                                                    " to target nearby opposing " + targetSide.name() + " hero " + potentialTarget.getName());
+                            break; // Target the first one found
+                        }
+                    }
+                }
+            }
+        }
     }
 }
