@@ -94,12 +94,15 @@ public class CommandHandler implements CommandExecutor {
         }
 
         // Basic validation for heroType, expand as necessary
-        if ("zombie".equals(heroType) || "villager".equals(heroType)) { // Also allow villager for old command for now
-            // Default to RED side for the old command, and log a warning
-            plugin.getLogger().warning("Player " + player.getName() + " used deprecated /xget summon. Defaulting to RED side. Use /xsummon for side selection.");
+        if ("zombie".equals(heroType.toLowerCase())) {
+            plugin.getLogger().warning("Player " + player.getName() + " used deprecated /xget summon for ZOMBIE. Defaulting to RED side. Use /xsummon for side selection.");
             heroManager.spawnHero(player, heroType, net.blockx.heroes.HeroSide.RED, weaponStack);
+        } else if ("villager".equals(heroType.toLowerCase())) {
+            plugin.getLogger().warning("Player " + player.getName() + " used deprecated /xget summon for VILLAGER. 'Villager' type will be a BLUE Zombie. Use /xsummon for specific side and type control.");
+            // HeroManager will handle making it a BLUE Zombie.
+            heroManager.spawnHero(player, heroType, net.blockx.heroes.HeroSide.BLUE, weaponStack); // Pass BLUE explicitly here for clarity
         } else {
-            player.sendMessage(ChatColor.RED + "Unknown hero type: " + heroType + ". Supported types: zombie, villager.");
+            player.sendMessage(ChatColor.RED + "Unknown hero type: " + heroType + ". Supported types: zombie, villager (summons a Blue Zombie).");
         }
     }
 }
