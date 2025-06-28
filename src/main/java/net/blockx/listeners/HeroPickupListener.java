@@ -34,9 +34,9 @@ public class HeroPickupListener implements Listener {
 
         PersistentDataContainer pdc = entity.getPersistentDataContainer();
 
-        // Check if the entity is tagged as one of our custom heroes
-        if (pdc.has(HeroManager.CUSTOM_HERO_TAG_KEY, PersistentDataType.STRING)) {
-            // String heroType = pdc.get(HeroManager.CUSTOM_HERO_TAG_KEY, PersistentDataType.STRING);
+        // Check if the entity is tagged as one of our custom heroes by checking for HERO_TYPE_KEY
+        if (pdc.has(HeroManager.HERO_TYPE_KEY, PersistentDataType.STRING)) {
+            String heroType = pdc.get(HeroManager.HERO_TYPE_KEY, PersistentDataType.STRING);
             // plugin.getLogger().info("Hero (" + heroType + ") attempting to pick up: " + event.getItem().getItemStack().getType());
 
             ItemStack itemStack = event.getItem().getItemStack();

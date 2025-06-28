@@ -94,10 +94,12 @@ public class CommandHandler implements CommandExecutor {
         }
 
         // Basic validation for heroType, expand as necessary
-        if ("zombie".equals(heroType)) { // Example: only "zombie" hero type is supported for now
-            heroManager.spawnHero(player, heroType, weaponStack);
+        if ("zombie".equals(heroType) || "villager".equals(heroType)) { // Also allow villager for old command for now
+            // Default to RED side for the old command, and log a warning
+            plugin.getLogger().warning("Player " + player.getName() + " used deprecated /xget summon. Defaulting to RED side. Use /xsummon for side selection.");
+            heroManager.spawnHero(player, heroType, net.blockx.heroes.HeroSide.RED, weaponStack);
         } else {
-            player.sendMessage(ChatColor.RED + "Unknown hero type: " + heroType + ". Supported types: zombie");
+            player.sendMessage(ChatColor.RED + "Unknown hero type: " + heroType + ". Supported types: zombie, villager.");
         }
     }
 }
