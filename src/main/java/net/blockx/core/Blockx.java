@@ -55,7 +55,15 @@ public final class Blockx extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this); // For Blockx's own @EventHandlers
         getServer().getPluginManager().registerEvents(new PlayerEventListener(this.abilityManager), this);
         getServer().getPluginManager().registerEvents(new HeroPickupListener(this, this.customItemManager), this); // Register HeroPickupListener
-        getServer().getPluginManager().registerEvents(new net.blockx.listeners.HeroTargetListener(this), this); // Register HeroTargetListener
+
+        getLogger().info("Attempting to register HeroTargetListener...");
+        try {
+            getServer().getPluginManager().registerEvents(new net.blockx.listeners.HeroTargetListener(this), this); // Register HeroTargetListener
+            getLogger().info("HeroTargetListener registered successfully.");
+        } catch (Exception e) {
+            getLogger().severe("!!! FAILED to register HeroTargetListener: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         createUltraCraftingTableRecipe(); // Assuming this is still relevant
         getLogger().info("Blockx Systems Initialized (core package).");
