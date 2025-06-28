@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "minecraft:item/iron_sword"
+  },
+  "overrides": [
+    { "predicate": { "custom_model_data": 11001 }, "model": "minecraft:item/ebene_sword" },
+    { "predicate": { "custom_model_data": 11002 }, "model": "minecraft:item/goliath_sword" },
+    { "predicate": { "custom_model_data": 11003 }, "model": "minecraft:item/bone_sword" }
+  ]
+}

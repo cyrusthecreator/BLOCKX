@@ -1,0 +1,11 @@
+name: blockx
+version: '1.0'
+main: net.blockx.core.Blockx
+api-version: '1.21'
+load: STARTUP
+
+commands:
+  xget:
+    description: Provides custom items, summons heroes, or shows help information.
+    usage: "/xget [<item_name>|summon <hero_type>[:<weapon_name>]|help]"
+    aliases: [getx, blockxget]

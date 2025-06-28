@@ -1,0 +1,32 @@
+{
+	"parent": "item/generated",
+	"textures": {
+	  "layer0": "minecraft:item/stick"
+	},
+	"overrides": [
+	  {
+		"predicate": {
+		  "custom_model_data": 12301
+		},
+		"model": "minecraft:item/barbarian_axe"
+	  },
+	  {
+		"predicate": {
+		  "custom_model_data": 12302
+		},
+		"model": "minecraft:item/goliath_sword"
+	  },
+	  {
+		"predicate": {
+		  "custom_model_data": 12303
+		},
+		"model": "minecraft:item/ebene_sword"
+	  },
+	  {
+		"predicate": {
+		  "custom_model_data": 12304
+		},
+		"model": "minecraft:item/bone_sword"
+	  }
+	]
+  }
