@@ -28,28 +28,51 @@ public class HeroTargetListener implements Listener {
             return;
         }
 
+        plugin.getLogger().info("[HeroTargetListener] Event: " + event.getEventName() + " Entity: " + entity.getName() + " (" + entity.getType() + ") attempting to target Target: " + target.getName() + " (" + target.getType() + ")");
+
         // Check if the targeting entity is a custom hero
         PersistentDataContainer entityPDC = entity.getPersistentDataContainer();
         if (!entityPDC.has(HeroManager.HERO_SIDE_KEY, PersistentDataType.STRING)) {
+            plugin.getLogger().info("[HeroTargetListener] Attacker " + entity.getName() + " is NOT a custom hero. Allowing default behavior.");
             return; // Not a custom hero, default behavior
         }
 
         String entitySideStr = entityPDC.get(HeroManager.HERO_SIDE_KEY, PersistentDataType.STRING);
-        HeroSide entitySide = HeroSide.valueOf(entitySideStr);
+        HeroSide entitySide;
+        try {
+            entitySide = HeroSide.valueOf(entitySideStr.toUpperCase()); // Use toUpperCase() for safety
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().severe("[HeroTargetListener] Attacker " + entity.getName() + " has invalid side data: '" + entitySideStr + "'. Cancelling event.");
+            event.setCancelled(true); // Prevent unknown side from acting
+            return;
+        }
+        plugin.getLogger().info("[HeroTargetListener] Attacker " + entity.getName() + " is on side: " + entitySide);
 
         // Check if the target is another custom hero
         PersistentDataContainer targetPDC = target.getPersistentDataContainer();
         if (targetPDC.has(HeroManager.HERO_SIDE_KEY, PersistentDataType.STRING)) {
             String targetSideStr = targetPDC.get(HeroManager.HERO_SIDE_KEY, PersistentDataType.STRING);
-            HeroSide targetSide = HeroSide.valueOf(targetSideStr);
+            HeroSide targetSide;
+            try {
+                targetSide = HeroSide.valueOf(targetSideStr.toUpperCase()); // Use toUpperCase() for safety
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().severe("[HeroTargetListener] Target " + target.getName() + " has invalid side data: '" + targetSideStr + "'. Cancelling event.");
+                event.setCancelled(true); // Prevent attacking hero with unknown side
+                return;
+            }
+            plugin.getLogger().info("[HeroTargetListener] Target " + target.getName() + " is also a hero, on side: " + targetSide);
 
             // If they are on the same side, cancel the targeting
             if (entitySide == targetSide) {
+                plugin.getLogger().info("[HeroTargetListener] Attacker and Target are on the SAME side (" + entitySide + "). Cancelling event.");
                 event.setCancelled(true);
+            } else {
+                plugin.getLogger().info("[HeroTargetListener] Attacker and Target are on OPPOSING sides (" + entitySide + " vs " + targetSide + "). Allowing event.");
+                // If they are on opposing sides, allow targeting (default event behavior)
+                // No explicit 'allow' needed, just don't cancel.
             }
-            // If they are on opposing sides, allow targeting (default event behavior)
-            // No explicit 'allow' needed, just don't cancel.
         } else {
+            plugin.getLogger().info("[HeroTargetListener] Target " + target.getName() + " is NOT a custom hero. Cancelling event.");
             // If the target is NOT a custom hero (e.g., a player, regular mob, etc.),
             // our custom heroes should not target them.
             event.setCancelled(true);
