@@ -81,8 +81,39 @@ public class HeroManager {
         hero.getPersistentDataContainer().set(HERO_SIDE_KEY, PersistentDataType.STRING, side.name());
         hero.getPersistentDataContainer().set(HERO_TYPE_KEY, PersistentDataType.STRING, heroTypeStr.toLowerCase());
 
-
         player.sendMessage(side.getDisplayColor() + "A " + heroName + " has been summoned to the " + side.name() + " side!");
         plugin.getLogger().info("Spawned " + side.name() + " hero: " + heroName + " (ActualType: "+ actualEntityType.name() +", RequestedType: " + heroTypeStr + ") for player " + player.getName() + " with weapon: " + (weapon != null ? weapon.getType() : "none"));
+
+        // Force target nearby opposing hero
+        if (hero instanceof org.bukkit.entity.Mob) {
+            org.bukkit.entity.Mob mob = (org.bukkit.entity.Mob) hero;
+            final double TARGET_RADIUS = 15.0; // Radius to scan for enemies
+            java.util.List<org.bukkit.entity.Entity> nearbyEntities = mob.getNearbyEntities(TARGET_RADIUS, TARGET_RADIUS, TARGET_RADIUS);
+
+            for (org.bukkit.entity.Entity nearbyEntity : nearbyEntities) {
+                if (nearbyEntity instanceof org.bukkit.entity.LivingEntity && nearbyEntity.getUniqueId() != mob.getUniqueId()) {
+                    org.bukkit.entity.LivingEntity potentialTarget = (org.bukkit.entity.LivingEntity) nearbyEntity;
+                    org.bukkit.persistence.PersistentDataContainer targetPDC = potentialTarget.getPersistentDataContainer();
+
+                    if (targetPDC.has(HERO_SIDE_KEY, PersistentDataType.STRING)) {
+                        String targetSideStr = targetPDC.get(HERO_SIDE_KEY, PersistentDataType.STRING);
+                        HeroSide targetSide = null;
+                        try {
+                            targetSide = HeroSide.valueOf(targetSideStr.toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            // Invalid side on potential target, skip
+                            continue;
+                        }
+
+                        if (targetSide != side) { // Opposing sides
+                            mob.setTarget(potentialTarget);
+                            plugin.getLogger().info("HeroManager: Forcing newly spawned " + side.name() + " hero " + heroName +
+                                                    " to target nearby opposing " + targetSide.name() + " hero " + potentialTarget.getName());
+                            break; // Target the first one found
+                        }
+                    }
+                }
+            }
+        }
     }
 }

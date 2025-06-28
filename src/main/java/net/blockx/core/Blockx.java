@@ -65,6 +65,33 @@ public final class Blockx extends JavaPlugin implements Listener {
             e.printStackTrace();
         }
 
+        // Add a delayed task to check handler list for HeroTargetListener
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            getLogger().info("--- [HandlerList Check for EntityTargetLivingEntityEvent] ---");
+            boolean foundListener = false;
+            int totalHandlers = 0;
+            try {
+                org.bukkit.event.HandlerList handlerList = org.bukkit.event.entity.EntityTargetLivingEntityEvent.getHandlerList();
+                if (handlerList != null) {
+                    for (org.bukkit.plugin.RegisteredListener registeredListener : handlerList.getRegisteredListeners()) {
+                        totalHandlers++;
+                        if (registeredListener.getListener() instanceof net.blockx.listeners.HeroTargetListener) {
+                            foundListener = true;
+                            getLogger().info("Found HeroTargetListener registered by plugin: " + registeredListener.getPlugin().getName() + " with priority: " + registeredListener.getPriority().name());
+                        }
+                    }
+                    getLogger().info("HeroTargetListener instance " + (foundListener ? "FOUND" : "NOT FOUND") + " in EntityTargetLivingEntityEvent handlers.");
+                    getLogger().info("Total registered listeners for EntityTargetLivingEntityEvent: " + totalHandlers);
+                } else {
+                    getLogger().warning("EntityTargetLivingEntityEvent.getHandlerList() returned null!");
+                }
+            } catch (Exception e) {
+                getLogger().severe("Error while checking handler list: " + e.getMessage());
+                e.printStackTrace();
+            }
+            getLogger().info("--- [HandlerList Check End] ---");
+        }, 100L); // 100L ticks = 5 seconds (20 ticks per second)
+
         createUltraCraftingTableRecipe(); // Assuming this is still relevant
         getLogger().info("Blockx Systems Initialized (core package).");
     }
