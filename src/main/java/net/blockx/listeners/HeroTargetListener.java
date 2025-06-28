@@ -21,14 +21,17 @@ public class HeroTargetListener implements Listener {
 
     @EventHandler
     public void onHeroTarget(EntityTargetLivingEntityEvent event) {
+        plugin.getLogger().info("[HeroTargetListener] Method onHeroTarget CALLED. Event: " + event.getEventName()); // BASIC ENTRY LOG
+
         Entity entity = event.getEntity();
         LivingEntity target = event.getTarget();
 
         if (target == null) {
+            plugin.getLogger().info("[HeroTargetListener] Target is null. Exiting.");
             return;
         }
 
-        plugin.getLogger().info("[HeroTargetListener] Event: " + event.getEventName() + " Entity: " + entity.getName() + " (" + entity.getType() + ") attempting to target Target: " + target.getName() + " (" + target.getType() + ")");
+        plugin.getLogger().info("[HeroTargetListener] Processing: " + entity.getName() + " (" + entity.getType() + ") trying to target " + target.getName() + " (" + target.getType() + ")");
 
         // Check if the targeting entity is a custom hero
         PersistentDataContainer entityPDC = entity.getPersistentDataContainer();
