@@ -26,11 +26,14 @@ public class HeroTargetListener implements Listener {
         String targetName = target != null ? target.getName() : "N/A";
         String targetType = target != null ? target.getType().name() : "N/A";
 
+        // Commented out verbose initial log - can be re-enabled for deep debugging if needed.
+        /*
         plugin.getLogger().info(
             "[HeroTargetListener] onHeroTarget CALLED. Event: " + event.getEventName() +
             ", Attacker: " + attackerName + " (" + attackerType + ")" +
             ", Target: " + targetName + " (" + targetType + ")"
         );
+        */
 
         // Step 4: Re-introduce Hero Identification Logic for the attacker
         org.bukkit.persistence.PersistentDataContainer attackerPDC = attacker.getPersistentDataContainer();

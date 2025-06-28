@@ -66,7 +66,8 @@ public final class Blockx extends JavaPlugin implements Listener {
             e.printStackTrace();
         }
 
-        // Add a delayed task to check handler list for HeroTargetListener
+        // The HandlerList Check diagnostic task has served its purpose and is now removed for cleaner startup logs.
+        /*
         Bukkit.getScheduler().runTaskLater(this, () -> {
             getLogger().info("--- [HandlerList Check for EntityTargetLivingEntityEvent] ---");
             boolean foundListener = false;
@@ -91,7 +92,8 @@ public final class Blockx extends JavaPlugin implements Listener {
                 e.printStackTrace();
             }
             getLogger().info("--- [HandlerList Check End] ---");
-        }, 100L); // 100L ticks = 5 seconds (20 ticks per second)
+        }, 100L);
+        */
 
         // Start Hero AI Scheduler
         if (this.heroAIScheduler != null) {
