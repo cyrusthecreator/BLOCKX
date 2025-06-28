@@ -11,6 +11,6 @@ commands:
     aliases: [getx, blockxget]
 
   xsummon:
-    description: Summons a hero to a specific side with an optional weapon.
-    usage: "/xsummon <hero_type>:<side>[:<weapon_name>]"
+    description: Summons a Zombie hero to the RED or BLUE side with an optional weapon.
+    usage: "/xsummon <RED|BLUE>[:<weapon_name>]"
     aliases: [summonx]

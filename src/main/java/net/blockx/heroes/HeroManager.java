@@ -29,39 +29,28 @@ public class HeroManager {
     // Updated spawnHero method to include HeroSide
     public void spawnHero(Player player, String heroTypeStr, HeroSide side, ItemStack weapon) {
         Location spawnLocation = player.getLocation();
-        EntityType entityType;
 
-        EntityType actualEntityType = EntityType.ZOMBIE; // Default to Zombie
-        String displayHeroType = heroTypeStr; // The type to display in messages/name
+        // heroTypeStr will now always be "zombie" from the command handlers.
+        // We no longer need to differentiate between "zombie" and "villager" here for EntityType.
+        EntityType entityTypeToSpawn = EntityType.ZOMBIE;
+        String baseHeroName = "Zombie"; // The base name for the hero type
 
-        // Determine actual EntityType and display name based on heroTypeStr
-        String requestedTypeLower = heroTypeStr.toLowerCase();
-        if ("villager".equals(requestedTypeLower)) {
-            // If "villager" is requested, spawn a Zombie but identify it as "Villager" for naming and side BLUE.
-            actualEntityType = EntityType.ZOMBIE;
-            displayHeroType = "Villager"; // Keep "Villager" for naming conventions
-            if (side != HeroSide.BLUE) {
-                // Enforce that "villager" hero type is always BLUE side, even if another side is specified.
-                // Or, we could allow Red Villager (Zombie). For now, let's suggest Blue.
-                player.sendMessage(ChatColor.YELLOW + "Note: 'Villager' heroes are always on the BLUE side. Spawning as BLUE Zombie.");
-                side = HeroSide.BLUE;
-            }
-        } else if (!"zombie".equals(requestedTypeLower)) {
-            player.sendMessage(ChatColor.RED + "Unsupported hero type for spawning: " + heroTypeStr + ". Defaulting to Zombie.");
-            // Fallthrough to use Zombie, displayHeroType will remain heroTypeStr or could be "Zombie"
-            displayHeroType = "Zombie"; // Correct display type if defaulting
+        // Validate heroTypeStr from command - should always be "zombie" but good to be safe.
+        if (!"zombie".equalsIgnoreCase(heroTypeStr)) {
+            plugin.getLogger().warning("HeroManager received an unexpected heroTypeStr: '" + heroTypeStr + "'. Defaulting to Zombie.");
+            // heroTypeStr = "zombie"; // Ensure it is set for PDC if it was something else
         }
 
+        org.bukkit.entity.LivingEntity hero = (org.bukkit.entity.LivingEntity) spawnLocation.getWorld().spawnEntity(spawnLocation, entityTypeToSpawn);
 
-        org.bukkit.entity.LivingEntity hero = (org.bukkit.entity.LivingEntity) spawnLocation.getWorld().spawnEntity(spawnLocation, actualEntityType);
-
-        // Set a custom name based on side and the *display* hero type
-        String heroName = side.name() + " " + displayHeroType.substring(0, 1).toUpperCase() + displayHeroType.substring(1);
+        // Set a custom name based on side and the base hero name ("Zombie")
+        String heroName = side.name() + " " + baseHeroName;
         if (weapon != null && weapon.hasItemMeta()) {
             ItemMeta weaponMeta = weapon.getItemMeta();
             if (weaponMeta != null && weaponMeta.hasDisplayName()) {
                 String cleanWeaponName = ChatColor.stripColor(weaponMeta.getDisplayName());
-                heroName = side.name() + " " + cleanWeaponName + " " + displayHeroType.substring(0, 1).toUpperCase() + displayHeroType.substring(1);
+                // Example: "RED Sword Zombie", "BLUE Axe Zombie"
+                heroName = side.name() + " " + cleanWeaponName + " " + baseHeroName;
             }
         }
         hero.setCustomName(side.getDisplayColor() + heroName);
@@ -74,15 +63,12 @@ public class HeroManager {
             hero.getEquipment().setItemInMainHandDropChance(0.0f);
         }
 
-        // Store hero side and *requested* type (or effective type) in persistent data
-        // Storing `heroTypeStr.toLowerCase()` to reflect the command used,
-        // or `displayHeroType.toLowerCase()` if we want to store the "effective" type.
-        // Let's store the originally requested type for clarity if needed later.
+        // Store hero side and the effective type ("zombie") in persistent data
         hero.getPersistentDataContainer().set(HERO_SIDE_KEY, PersistentDataType.STRING, side.name());
-        hero.getPersistentDataContainer().set(HERO_TYPE_KEY, PersistentDataType.STRING, heroTypeStr.toLowerCase());
+        hero.getPersistentDataContainer().set(HERO_TYPE_KEY, PersistentDataType.STRING, "zombie"); // Always "zombie" now
 
         player.sendMessage(side.getDisplayColor() + "A " + heroName + " has been summoned to the " + side.name() + " side!");
-        plugin.getLogger().info("Spawned " + side.name() + " hero: " + heroName + " (ActualType: "+ actualEntityType.name() +", RequestedType: " + heroTypeStr + ") for player " + player.getName() + " with weapon: " + (weapon != null ? weapon.getType() : "none"));
+        plugin.getLogger().info("Spawned " + side.name() + " hero: " + heroName + " (EntityType: "+ entityTypeToSpawn.name() + ") for player " + player.getName() + " with weapon: " + (weapon != null ? weapon.getType() : "none"));
 
         // Force target nearby opposing hero
         if (hero instanceof org.bukkit.entity.Mob) {

@@ -33,39 +33,30 @@ public class XSummonCommandHandler implements CommandExecutor {
         }
 
         if (args.length < 1) {
-            player.sendMessage(ChatColor.RED + "Usage: /xsummon <hero_type>:<side>[:<weapon_name>]");
+            player.sendMessage(ChatColor.RED + "Usage: /xsummon <RED|BLUE>[:<weapon_name>]");
             return true;
         }
 
-        // Argument format: <hero_type>:<side>[:<weapon_name>]
-        // Example: zombie:red:sword or villager:blue
-        String[] parts = args[0].split(":", 3);
+        // Argument format: <side>[:<weapon_name>]
+        // Example: RED:sword or BLUE
+        String[] parts = args[0].split(":", 2); // Max 2 parts: side and weapon
 
-        if (parts.length < 2) {
-            player.sendMessage(ChatColor.RED + "Invalid format. Usage: /xsummon <hero_type>:<side>[:<weapon_name>]");
-            return true;
-        }
-
-        String heroTypeStr = parts[0].toLowerCase();
-        String sideStr = parts[1].toUpperCase();
+        String sideStr = parts[0].toUpperCase();
         String weaponName = null;
-        if (parts.length > 2) {
-            weaponName = parts[2].toLowerCase();
+        if (parts.length > 1) {
+            weaponName = parts[1].toLowerCase();
         }
 
         HeroSide side;
         try {
             side = HeroSide.valueOf(sideStr);
         } catch (IllegalArgumentException e) {
-            player.sendMessage(ChatColor.RED + "Invalid side: " + sideStr + ". Use RED or BLUE.");
+            player.sendMessage(ChatColor.RED + "Invalid side: '" + parts[0] + "'. Usage: /xsummon <RED|BLUE>[:<weapon_name>]");
             return true;
         }
 
-        // Validate heroType (simple validation for now)
-        if (!"zombie".equals(heroTypeStr) && !"villager".equals(heroTypeStr)) {
-            player.sendMessage(ChatColor.RED + "Unknown hero type: " + heroTypeStr + ". Supported types: zombie, villager.");
-            return true;
-        }
+        // heroTypeStr is now always "zombie"
+        String heroTypeStr = "zombie";
 
         ItemStack weaponStack = null;
         if (weaponName != null && !weaponName.isEmpty()) {

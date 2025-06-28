@@ -51,6 +51,26 @@ public class HeroTargetListener implements Listener {
         plugin.getLogger().info("[HeroTargetListener] Attacker " + attackerName + " IS a custom hero. Side: " + attackerSide);
 
         // Now check the target
+        // CRITICAL FIX for NullPointerException: event.getTarget() can be null if the mob is clearing its target.
+        if (target == null) {
+            plugin.getLogger().info("[HeroTargetListener] Target is null (e.g., mob clearing target). Attacker " + attackerName + " is not targeting anything specific now. Event likely to be cancelled by mob's AI or further logic if needed.");
+            // If a hero was targeting something that disappeared, and now has a null target,
+            // it effectively isn't targeting a specific entity that our rules would apply to.
+            // The event might still be useful for some AI logic (like looking for a new target),
+            // but our hero-vs-hero or hero-vs-other rules don't apply to a null target.
+            // We might let the event proceed if the mob is just clearing its target,
+            // or cancel if a hero should always have a target or specific behavior when losing one.
+            // For now, if target is null, let the event proceed as the mob is likely just resetting its AI state.
+            // However, the vanilla setTarget(null) call itself triggers this event.
+            // If the attacker is a hero, and target is null, it means it *was* targeting something.
+            // We don't want it to target "nothing" in a way that bypasses our rules later.
+            // It's safer to assume if a hero is involved in a target event, and the target becomes null,
+            // this specific event doesn't need our intervention beyond noting it.
+            // The mob's AI or our HeroAIScheduler will find a new valid target.
+            // No cancellation needed here as there's no "target" to apply rules against.
+            return;
+        }
+
         org.bukkit.persistence.PersistentDataContainer targetPDC = target.getPersistentDataContainer();
         if (targetPDC.has(net.blockx.heroes.HeroManager.HERO_SIDE_KEY, org.bukkit.persistence.PersistentDataType.STRING)) {
             // Target is also a custom hero
