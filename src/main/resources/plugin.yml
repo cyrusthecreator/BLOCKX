@@ -9,3 +9,8 @@ commands:
     description: Provides custom items, summons heroes, or shows help information.
     usage: "/xget [<item_name>|summon <hero_type>[:<weapon_name>]|help]"
     aliases: [getx, blockxget]
+
+  xsummon:
+    description: Summons a hero to a specific side with an optional weapon.
+    usage: "/xsummon <hero_type>:<side>[:<weapon_name>]"
+    aliases: [summonx]

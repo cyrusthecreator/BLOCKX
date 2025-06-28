@@ -49,11 +49,13 @@ public final class Blockx extends JavaPlugin implements Listener {
         // Register Command Executor
         // CommandHandler constructor now expects Blockx instance, CustomItemManager, and HeroManager
         this.getCommand("xget").setExecutor(new CommandHandler(this, this.customItemManager, this.heroManager));
+        this.getCommand("xsummon").setExecutor(new net.blockx.commands.XSummonCommandHandler(this, this.customItemManager, this.heroManager));
 
         // Register Event Listeners
         getServer().getPluginManager().registerEvents(this, this); // For Blockx's own @EventHandlers
         getServer().getPluginManager().registerEvents(new PlayerEventListener(this.abilityManager), this);
         getServer().getPluginManager().registerEvents(new HeroPickupListener(this, this.customItemManager), this); // Register HeroPickupListener
+        getServer().getPluginManager().registerEvents(new net.blockx.listeners.HeroTargetListener(this), this); // Register HeroTargetListener
 
         createUltraCraftingTableRecipe(); // Assuming this is still relevant
         getLogger().info("Blockx Systems Initialized (core package).");
