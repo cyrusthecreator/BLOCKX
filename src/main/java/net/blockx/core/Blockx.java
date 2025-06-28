@@ -34,7 +34,7 @@ public final class Blockx extends JavaPlugin implements Listener {
     private BarbarianAxeAbility barbarianAxeAbility;
     private AbilityManager abilityManager;
     private HeroManager heroManager; // Added HeroManager instance
-    // HeroPickupListener doesn't need to be a field if only instantiated and registered
+    private net.blockx.ai.HeroAIScheduler heroAIScheduler; // Added HeroAIScheduler instance
 
     @Override
     public void onEnable() {
@@ -45,6 +45,7 @@ public final class Blockx extends JavaPlugin implements Listener {
         this.barbarianAxeAbility = new BarbarianAxeAbility(this, this.customItemManager); // Assuming this is still needed
         this.abilityManager = new AbilityManager(this, this.customItemManager);
         this.heroManager = new HeroManager(this, this.customItemManager); // Initialize HeroManager
+        this.heroAIScheduler = new net.blockx.ai.HeroAIScheduler(this); // Initialize HeroAIScheduler
 
         // Register Command Executor
         // CommandHandler constructor now expects Blockx instance, CustomItemManager, and HeroManager
@@ -92,6 +93,14 @@ public final class Blockx extends JavaPlugin implements Listener {
             getLogger().info("--- [HandlerList Check End] ---");
         }, 100L); // 100L ticks = 5 seconds (20 ticks per second)
 
+        // Start Hero AI Scheduler
+        if (this.heroAIScheduler != null) {
+            this.heroAIScheduler.start();
+            getLogger().info("HeroAIScheduler initiated.");
+        } else {
+            getLogger().severe("HeroAIScheduler was not initialized!");
+        }
+
         createUltraCraftingTableRecipe(); // Assuming this is still relevant
         getLogger().info("Blockx Systems Initialized (core package).");
     }
@@ -99,6 +108,10 @@ public final class Blockx extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         getLogger().info("Blockx Plugin Disabled (core package)");
+        if (this.heroAIScheduler != null) {
+            this.heroAIScheduler.stop();
+            getLogger().info("HeroAIScheduler stopped.");
+        }
     }
 
     private ItemStack getUltraCraftingItem() {
